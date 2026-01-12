@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block content %}
+  <div class="card" style="margin-top:16px;">
+    <h1>Test Templates</h1>
+    <p>Paste OCR/text to see which template matches and what fields will be extracted.</p>
+
+    <form method="post" action="/templates/test{% if template_id %}?template_id={{ template_id }}{% endif %}">
+      <label>Optional: select template</label>
+      <select name="template_id">
+        <option value="">(auto pick best match)</option>
+        {% for t in templates %}
+          <option value="{{ t.id }}" {% if template_id and (t.id|string)==(template_id|string) %}selected{% endif %}>{{ t.id }} - {{ t.name }}</option>
+        {% endfor %}
+      </select>
+
+      <label>Text</label>
+      <textarea name="text" placeholder="Paste OCR output here...">{{ text or "" }}</textarea>
+
+      <div style="margin-top:12px;">
+        <button class="btn primary" type="submit">Run Test</button>
+        <a class="btn" href="/templates">Back</a>
+      </div>
+    </form>
+
+    {% if result %}
+      <hr style="border:0; border-top:1px solid rgba(255,255,255,0.10); margin:16px 0;" />
+      <h2>Result</h2>
+      <p><b>Chosen template</b>: <span class="code">{{ result.template_name }}</span></p>
+      <p><b>Extracted</b>:</p>
+      <div class="code">company={{ result.company }}
+invoice_number={{ result.invoice_number }}
+date={{ result.date }}</div>
+      <p><b>Would write to</b>:</p>
+      <div class="code">path={{ result.out_rel }}
+filename={{ result.filename }}</div>
+    {% endif %}
+  </div>
+{% endblock %}

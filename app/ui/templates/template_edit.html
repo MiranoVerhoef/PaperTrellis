@@ -1,0 +1,108 @@
+{% extends "layout.html" %}
+{% block content %}
+  <div class="card" style="margin-top:16px;">
+    <h1>{{ "New Template" if is_new else "Edit Template" }}</h1>
+    <p>Use regex patterns to detect documents and extract fields from OCR text.</p>
+
+    <form method="post" action="{{ action }}">
+      <div class="row two">
+        <div>
+          <label>Name</label>
+          <input type="text" name="name" value="{{ t.name or '' }}" required />
+        </div>
+        <div>
+          <label>Enabled</label>
+          <select name="enabled">
+            <option value="true" {% if t.enabled %}selected{% endif %}>true</option>
+            <option value="false" {% if not t.enabled %}selected{% endif %}>false</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label>Document folder (relative)</label>
+
+          <div class="row" style="grid-template-columns: 1fr; gap:8px;">
+            <div>
+              <small class="muted">Pick an existing folder from your library (scanned), or type your own.</small>
+              <select id="docFolderSelect">
+                <option value="">(choose existing folder)</option>
+                {% for d in library_dirs %}
+                  <option value="{{ d }}">{{ d }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <input id="docFolderInput" type="text" name="doc_folder" value="{{ t.doc_folder or 'Invoices' }}" />
+            </div>
+          </div>
+
+          <script>
+            (function () {
+              const sel = document.getElementById("docFolderSelect");
+              const inp = document.getElementById("docFolderInput");
+              if (!sel || !inp) return;
+              sel.addEventListener("change", () => {
+                if (sel.value) inp.value = sel.value;
+              });
+            })();
+          </script>
+        </div>
+
+        <div>
+          <label>Match mode</label>
+          <select name="match_mode">
+            <option value="all" {% if t.match_mode=='all' %}selected{% endif %}>all (every pattern must match)</option>
+            <option value="any" {% if t.match_mode=='any' %}selected{% endif %}>any (at least one pattern matches)</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Match patterns (one regex per line)</label>
+      <textarea name="match_patterns">{{ (t.match_patterns or [])|join('\n') }}</textarea>
+
+      <div class="row two">
+        <div>
+          <label>Company regex (first capture group becomes company)</label>
+          <input type="text" name="company_regex" value="{{ t.company_regex or '' }}" />
+        </div>
+        <div>
+          <label>Invoice number regex</label>
+          <input type="text" name="invoice_number_regex" value="{{ t.invoice_number_regex or '' }}" />
+        </div>
+      </div>
+
+      <label>Date regex</label>
+      <input type="text" name="date_regex" value="{{ t.date_regex or '' }}" />
+
+      <div class="row two">
+        <div>
+          <label>Output path template</label>
+          <input type="text" name="output_path_template" value="{{ t.output_path_template or '' }}" />
+          <small class="muted">Example: <span class="code">{doc_folder}/{company}/{date:%Y}</span></small>
+        </div>
+        <div>
+          <label>Filename template (without extension)</label>
+          <input type="text" name="filename_template" value="{{ t.filename_template or '' }}" />
+          <small class="muted">Example: <span class="code">{company}_{invoice_number}_{date:%Y-%m-%d}</span></small>
+        </div>
+      </div>
+
+      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn primary" type="submit">Save</button>
+        <a class="btn" href="/templates">Back</a>
+        <a class="btn" href="/templates/test?template_id={{ t.id }}">Test this template</a>
+      </div>
+    </form>
+
+    <hr style="border:0; border-top:1px solid rgba(255,255,255,0.10); margin:16px 0;" />
+    <h2>Available variables</h2>
+    <div class="code">{doc_folder} {doc_type} {company} {invoice_number} {date} {original_name}</div>
+    <p>For dates you can use Python datetime formatting: <span class="code">{date:%Y-%m-%d}</span></p>
+
+    <hr style="border:0; border-top:1px solid rgba(255,255,255,0.10); margin:16px 0;" />
+    <h2>Preserving original structure</h2>
+    <p>When processing from the ingest folder, the app preserves the original ingest subfolder structure inside your library.</p>
+  </div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block content %}
+  <div class="card" style="margin-top:16px;">
+    <h1>Templates</h1>
+    <p>Templates decide how documents are classified, which fields are extracted, and where the file is moved.</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+      <a class="btn primary" href="/templates/new">New template</a>
+      <a class="btn" href="/templates/test">Test templates</a>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Enabled</th>
+          <th>Folder</th>
+          <th>Match</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in templates %}
+          <tr>
+            <td><small class="muted">{{ t.id }}</small></td>
+            <td>{{ t.name }}</td>
+            <td><span class="badge {{ 'ok' if t.enabled else 'skipped' }}">{{ 'yes' if t.enabled else 'no' }}</span></td>
+            <td><small class="muted">{{ t.doc_folder }}</small></td>
+            <td><small class="muted">{{ t.match_mode }} ({{ (t.match_patterns or [])|length }})</small></td>
+            <td style="text-align:right;">
+              <a class="btn" href="/templates/{{ t.id }}">Edit</a>
+              <form style="display:inline" method="post" action="/templates/{{ t.id }}/delete" onsubmit="return confirm('Delete template?');">
+                <button class="btn danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

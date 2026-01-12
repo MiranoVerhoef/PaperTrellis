@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block content %}
+  <div class="card" style="margin-top:16px;">
+    <h1>Ingest Settings</h1>
+    <p>These settings control auto-processing of the ingest folder inside the container.</p>
+
+    <form method="post" action="/settings">
+      <div class="row two">
+        <div>
+          <label>Failed directory (inside container)</label>
+          <input type="text" value="{{ failed_dir }}" disabled />
+        </div>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label>Ingest directory (inside container)</label>
+          <input type="text" name="ingest_dir" value="{{ ingest_dir }}" placeholder="/data/ingest" />
+        </div>
+        <div>
+          <label>Library directory (inside container)</label>
+          <input type="text" name="library_dir" value="{{ library_dir }}" placeholder="/data/library" />
+        </div>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label>Failed directory (inside container)</label>
+          <input type="text" value="{{ failed_dir }}" disabled />
+        </div>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label>Scanning enabled</label>
+          <select name="scan_enabled">
+            <option value="true" {% if scan_enabled %}selected{% endif %}>true</option>
+            <option value="false" {% if not scan_enabled %}selected{% endif %}>false</option>
+          </select>
+        </div>
+        <div>
+          <label>OCR language(s)</label>
+          <input type="text" name="tesseract_lang" value="{{ tesseract_lang }}" placeholder="eng or eng+nld" />
+        </div>
+      </div>
+
+      <label>Scan interval (seconds)</label>
+      <input type="number" min="5" max="3600" name="scan_interval_seconds" value="{{ scan_interval_seconds }}" />
+
+      <div style="margin-top:12px;">
+        <button class="btn primary" type="submit">Save</button>
+        <a class="btn" href="/">Back</a>
+      </div>
+    </form>
+
+    <hr style="border:0; border-top:1px solid rgba(255,255,255,0.10); margin:16px 0;" />
+    <h2>Note</h2>
+    <p>When you change settings, restart the container to apply environment variables.
+       The UI settings are stored in SQLite and used by the app, but the watcher reads the
+       current in-memory settings at startup.</p>
+  </div>
+{% endblock %}

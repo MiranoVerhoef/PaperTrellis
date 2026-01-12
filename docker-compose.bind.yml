@@ -1,0 +1,20 @@
+services:
+  papertrellis:
+    image: ghcr.io/miranoverhoef/papertrellis:latest
+    container_name: papertrellis
+    ports:
+      - "8000:8000"
+    environment:
+      ODM_INGEST_DIR: /data/ingest
+      ODM_LIBRARY_DIR: /data/library
+      ODM_CONFIG_DIR: /data/config
+      ODM_FAILED_DIR: /data/failed
+      ODM_SCAN_ENABLED: "true"
+      ODM_SCAN_INTERVAL_SECONDS: "15"
+      ODM_TESSERACT_LANG: "eng"
+    volumes:
+      - ./data/ingest:/data/ingest
+      - ./data/library:/data/library
+      - ./data/config:/data/config
+      - ./data/failed:/data/failed
+      - ./data/tmp:/data/tmp

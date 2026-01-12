@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+{% block content %}
+  <div class="grid">
+    <div class="card">
+      <h1>Dashboard</h1>
+      <p>Latest processing jobs.</p>
+      <div style="margin-top:12px;">
+        <a class="btn primary" href="/upload">Upload a document</a>
+        <a class="btn" href="/templates">Manage templates</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h1>Status</h1>
+      <p><b>Ingest folder</b>: <span class="code">{{ ingest_dir }}</span></p>
+      <p><b>Library folder</b>: <span class="code">{{ library_dir }}</span></p>
+      <p><b>Failed folder</b>: <span class="code">{{ failed_dir }}</span></p>
+      <p><b>Scanning</b>: {{ "enabled" if scan_enabled else "disabled" }}</p>
+      <p><b>OCR language</b>: <span class="code">{{ tesseract_lang }}</span></p>
+      <a class="btn" href="/settings">Change ingest settings</a>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h1>Recent Jobs</h1>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>When (UTC)</th>
+          <th>Status</th>
+          <th>Source</th>
+          <th>Original</th>
+          <th>Destination</th>
+          <th>Template</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for j in jobs %}
+          <tr>
+            <td><small class="muted">{{ j.created_at }}</small></td>
+            <td>
+              <span class="badge {{ j.status }}">{{ j.status }}</span>
+              {% if j.message %}<div><small class="muted">{{ j.message }}</small></div>{% endif %}
+            </td>
+            <td><small class="muted">{{ j.source }}</small></td>
+            <td><small class="muted">{{ j.original_name }}</small></td>
+            <td><small class="muted">{{ j.dest_path or "-" }}</small></td>
+            <td><small class="muted">{{ j.template_id or "-" }}</small></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
