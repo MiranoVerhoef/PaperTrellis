@@ -4,7 +4,6 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# OCR deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     poppler-utils \
@@ -15,7 +14,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
@@ -34,6 +32,7 @@ ENV ODM_DATA_DIR=/data \
     ODM_TMP_DIR=/data/tmp \
     ODM_SCAN_ENABLED=true \
     ODM_SCAN_INTERVAL_SECONDS=15 \
-    ODM_TESSERACT_LANG=eng
+    ODM_TESSERACT_LANG=eng \
+    ODM_AUTH_ENABLED=true
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

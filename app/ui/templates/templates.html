@@ -1,37 +1,46 @@
 {% extends "layout.html" %}
-{% block content %}
-  <div class="card" style="margin-top:16px;">
-    <h1>Templates</h1>
-    <p>Templates decide how documents are classified, which fields are extracted, and where the file is moved.</p>
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
-      <a class="btn primary" href="/templates/new">New template</a>
-      <a class="btn" href="/templates/test">Test templates</a>
-    </div>
-  </div>
+{% set active = "templates" %}
+{% set title = "Templates" %}
+{% set subtitle = "Match documents, extract fields, apply tags, and route into your existing library" %}
 
-  <div class="card" style="margin-top:16px;">
+{% block topbar %}
+  <a class="btn primary" href="/templates/new">New template</a>
+{% endblock %}
+
+{% block content %}
+  <div class="card">
     <table class="table">
       <thead>
         <tr>
-          <th>ID</th>
           <th>Name</th>
-          <th>Enabled</th>
+          <th>Doc type</th>
           <th>Folder</th>
-          <th>Match</th>
+          <th>Tags</th>
+          <th>Enabled</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        {% for t in templates %}
+        {% if templates|length == 0 %}
+          <tr><td colspan="6" class="muted">No templates yet.</td></tr>
+        {% endif %}
+        {% for tpl in templates %}
           <tr>
-            <td><small class="muted">{{ t.id }}</small></td>
-            <td>{{ t.name }}</td>
-            <td><span class="badge {{ 'ok' if t.enabled else 'skipped' }}">{{ 'yes' if t.enabled else 'no' }}</span></td>
-            <td><small class="muted">{{ t.doc_folder }}</small></td>
-            <td><small class="muted">{{ t.match_mode }} ({{ (t.match_patterns or [])|length }})</small></td>
-            <td style="text-align:right;">
-              <a class="btn" href="/templates/{{ t.id }}">Edit</a>
-              <form style="display:inline" method="post" action="/templates/{{ t.id }}/delete" onsubmit="return confirm('Delete template?');">
+            <td>
+              <div class="doc-title">{{ tpl.name }}</div>
+              <div class="doc-sub muted">{{ tpl.match_mode }} match • {{ tpl.match_patterns()|length }} patterns</div>
+            </td>
+            <td>{{ tpl.doc_type }}</td>
+            <td><span class="code">{{ tpl.doc_folder }}</span></td>
+            <td>
+              {% for t in tpl.tags() %}
+                <span class="tag">{{ t }}</span>
+              {% endfor %}
+            </td>
+            <td><span class="status {% if tpl.enabled %}ok{% else %}skipped{% endif %}">{{ "on" if tpl.enabled else "off" }}</span></td>
+            <td class="right">
+              <a class="btn" href="/templates/{{ tpl.id }}">Edit</a>
+              <form method="post" action="/templates/{{ tpl.id }}/delete" style="display:inline" onsubmit="return confirm('Delete template?');">
                 <button class="btn danger" type="submit">Delete</button>
               </form>
             </td>
@@ -39,5 +48,18 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
+
+  <div class="card">
+    <div class="card-h">Library folders (detected)</div>
+    <div class="muted">PaperTrellis inherits your existing folder tree under <span class="code">/data/library</span>.</div>
+    <div class="folder-list">
+      {% for p in library_dirs[:120] %}
+        <div class="folder">{{ p }}</div>
+      {% endfor %}
+      {% if library_dirs|length > 120 %}
+        <div class="muted">…and {{ library_dirs|length - 120 }} more</div>
+      {% endif %}
+    </div>
   </div>
 {% endblock %}

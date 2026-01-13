@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PaperTrellis • Login</title>
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body class="login-body">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-mark">PT</div>
+      <div>
+        <div class="login-title">PaperTrellis</div>
+        <div class="login-sub">v{{ app_version }}</div>
+      </div>
+    </div>
+
+    {% if not config_ok %}
+      <div class="alert">
+        Login is enabled, but the server is not configured.<br/>
+        Set <span class="code">ODM_ADMIN_PASSWORD</span> and <span class="code">ODM_SESSION_SECRET</span>.
+      </div>
+    {% endif %}
+
+    {% if error %}
+      <div class="alert">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/login" class="form">
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Enter password" autofocus />
+      <button type="submit" class="btn primary" {% if not config_ok %}disabled{% endif %}>Sign in</button>
+    </form>
+
+    <div class="login-foot muted">
+      Single-user login. No multi-tenant features — just your documents.
+    </div>
+  </div>
+</body>
+</html>

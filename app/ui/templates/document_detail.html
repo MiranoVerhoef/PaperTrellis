@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+{% set active = "documents" %}
+{% set title = "Document" %}
+{% set subtitle = doc.rel_path %}
+
+{% block topbar %}
+  <a class="btn" href="/documents">Back</a>
+  <a class="btn" href="/documents/{{ doc.id }}/file" target="_blank">Download</a>
+  <form method="post" action="/documents/{{ doc.id }}/analyze" style="display:inline">
+    <button class="btn primary" type="submit">Analyze</button>
+  </form>
+{% endblock %}
+
+{% block content %}
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-h">Preview</div>
+      <div class="preview">
+        {% if doc.ext == ".pdf" %}
+          <iframe class="frame" src="/documents/{{ doc.id }}/file"></iframe>
+        {% else %}
+          <img class="img" src="/documents/{{ doc.id }}/file" />
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <div class="card-h">Details</div>
+
+        <div class="kv">
+          <div class="k">Status</div><div class="v"><span class="status {{ doc.status }}">{{ doc.status }}</span></div>
+          <div class="k">Location</div><div class="v">{{ doc.location }}</div>
+          <div class="k">Path</div><div class="v"><span class="code">{{ doc.rel_path }}</span></div>
+          <div class="k">Template</div>
+          <div class="v">
+            {% if template %}
+              <a class="link" href="/templates/{{ template.id }}">{{ template.name }}</a>
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="kv">
+          <div class="k">Company</div><div class="v">{{ doc.extracted_company or "—" }}</div>
+          <div class="k">Invoice #</div><div class="v">{{ doc.extracted_invoice_number or "—" }}</div>
+          <div class="k">Date</div><div class="v">{{ doc.extracted_date or "—" }}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">Tags</div>
+        <div class="tag-row">
+          {% for t in doc.tags() %}
+            <a class="tag" href="/documents?tag={{ t }}">{{ t }}</a>
+          {% endfor %}
+          {% if doc.tags()|length == 0 %}
+            <span class="muted">No tags yet. Click “Analyze” or add some.</span>
+          {% endif %}
+        </div>
+
+        <form method="post" action="/documents/{{ doc.id }}/tags" class="form-inline">
+          <input type="text" name="tags" value="{{ doc.tags()|join(', ') }}" placeholder="comma,separated,tags" />
+          <button class="btn" type="submit">Save</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-h">Text (OCR)</div>
+        {% if doc.ocr_text %}
+          <pre class="text-block">{{ doc.ocr_text[:8000] }}{% if doc.ocr_text|length > 8000 %}
+
+… (truncated){% endif %}</pre>
+        {% else %}
+          <div class="muted">No OCR text stored yet. Click “Analyze” to extract text.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

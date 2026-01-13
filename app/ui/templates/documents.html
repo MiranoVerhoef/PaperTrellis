@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+{% set active = "documents" %}
+{% set title = "Documents" %}
+{% set subtitle = "Browse, filter, and search your library (and existing folders)" %}
+
+{% block topbar %}
+  <form class="search" method="get" action="/documents">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search filename, path, OCR text…" />
+    {% if tag %}<input type="hidden" name="tag" value="{{ tag }}"/>{% endif %}
+    {% if status %}<input type="hidden" name="status" value="{{ status }}"/>{% endif %}
+    {% if location %}<input type="hidden" name="location" value="{{ location }}"/>{% endif %}
+    <button class="btn" type="submit">Search</button>
+  </form>
+
+  <form class="upload" method="post" action="/upload" enctype="multipart/form-data">
+    <label class="btn primary">
+      Upload
+      <input class="file" type="file" name="file" onchange="this.form.submit()" />
+    </label>
+  </form>
+{% endblock %}
+
+{% block content %}
+  <div class="filters">
+    <a class="chip {% if not location %}on{% endif %}" href="/documents?q={{ q }}">All</a>
+    <a class="chip {% if location=='library' %}on{% endif %}" href="/documents?location=library&q={{ q }}">Library</a>
+    <a class="chip {% if location=='failed' %}on{% endif %}" href="/documents?location=failed&q={{ q }}">Failed</a>
+
+    <span class="sep"></span>
+
+    <a class="chip {% if not status %}on{% endif %}" href="/documents?location={{ location }}&q={{ q }}&tag={{ tag }}">Any status</a>
+    <a class="chip {% if status=='ok' %}on{% endif %}" href="/documents?status=ok&location={{ location }}&q={{ q }}&tag={{ tag }}">OK</a>
+    <a class="chip {% if status=='indexed' %}on{% endif %}" href="/documents?status=indexed&location={{ location }}&q={{ q }}&tag={{ tag }}">Indexed</a>
+    <a class="chip {% if status=='failed' %}on{% endif %}" href="/documents?status=failed&location={{ location }}&q={{ q }}&tag={{ tag }}">Failed</a>
+    <a class="chip {% if status=='skipped' %}on{% endif %}" href="/documents?status=skipped&location={{ location }}&q={{ q }}&tag={{ tag }}">Unmatched</a>
+
+    {% if tag %}
+      <span class="sep"></span>
+      <span class="chip on">Tag: {{ tag }}</span>
+      <a class="chip" href="/documents?location={{ location }}&status={{ status }}&q={{ q }}">Clear tag</a>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Document</th>
+          <th>Tags</th>
+          <th>Status</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if docs|length == 0 %}
+          <tr><td colspan="4" class="muted">No documents found.</td></tr>
+        {% endif %}
+        {% for d in docs %}
+          <tr class="rowlink" onclick="window.location='/documents/{{ d.id }}'">
+            <td>
+              <div class="doc-title">{{ d.filename }}</div>
+              <div class="doc-sub muted">{{ d.location }}/{{ d.rel_path }}</div>
+            </td>
+            <td>
+              {% for t in d.tags()[:6] %}
+                <a class="tag" href="/documents?tag={{ t }}">{{ t }}</a>
+              {% endfor %}
+              {% if d.tags()|length > 6 %}
+                <span class="muted">+{{ d.tags()|length - 6 }}</span>
+              {% endif %}
+            </td>
+            <td><span class="status {{ d.status }}">{{ d.status }}</span></td>
+            <td class="muted">{{ d.updated_at.strftime("%Y-%m-%d %H:%M") if d.updated_at else "" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="pager">
+      {% if page > 1 %}
+        <a class="btn" href="/documents?page={{ page-1 }}&q={{ q }}&tag={{ tag }}&status={{ status }}&location={{ location }}">Prev</a>
+      {% endif %}
+      <span class="muted">Page {{ page }}</span>
+      {% if has_more %}
+        <a class="btn" href="/documents?page={{ page+1 }}&q={{ q }}&tag={{ tag }}&status={{ status }}&location={{ location }}">Next</a>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

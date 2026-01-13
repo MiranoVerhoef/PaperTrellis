@@ -1,50 +1,104 @@
 from __future__ import annotations
 
-from typing import Optional
 from datetime import datetime
-from sqlmodel import SQLModel, Field, Column, JSON
+from typing import Optional, List
 
-class AppConfig(SQLModel, table=True):
-    key: str = Field(primary_key=True)
-    value: str
+from sqlmodel import SQLModel, Field
+import json
 
 class Template(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+
     name: str
     enabled: bool = True
 
-    # Storage folder (relative to library root), e.g. "Invoices"
-    doc_folder: str = "Invoices"
+    doc_type: str = "Document"
+    doc_folder: str = "Inbox"
 
-    # "all" => all match patterns must appear, "any" => any one is enough
+    # Stored as JSON array strings
+    tags_json: str = "[]"
     match_mode: str = "all"
-    # list[str] stored as JSON
-    match_patterns: list[str] = Field(default_factory=list, sa_column=Column(JSON))
+    match_patterns_json: str = "[]"
 
-    # regex patterns for field extraction
-    company_regex: str = r"(?im)^(?:seller|vendor|company)\s*[:\-]\s*(.+)$"
-    invoice_number_regex: str = r"(?im)invoice\s*(?:no|number|nr)\.?\s*[:\-]?\s*([A-Z0-9\-\/]+)"
-    date_regex: str = r"(?im)date\s*[:\-]?\s*([0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}|[0-9]{1,2}[-/][0-9]{1,2}[-/][0-9]{2,4})"
+    company_regex: str = ""
+    invoice_number_regex: str = ""
+    date_regex: str = ""
 
-    # Jinja-ish-ish simple python .format template:
-    # available vars: doc_type, company, invoice_number, date (datetime), ext, original_name
-    output_path_template: str = "{doc_folder}/{company}"
+    output_path_template: str = "{doc_folder}/{company}/{date:%Y}"
     filename_template: str = "{company}_{invoice_number}_{date:%Y-%m-%d}"
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    def tags(self) -> List[str]:
+        try:
+            arr = json.loads(self.tags_json or "[]")
+            return [str(x).strip() for x in arr if str(x).strip()]
+        except Exception:
+            return []
+
+    def set_tags(self, tags: List[str]) -> None:
+        tags = [t.strip() for t in (tags or []) if t and t.strip()]
+        self.tags_json = json.dumps(sorted(set(tags), key=str.lower))
+
+    def match_patterns(self) -> List[str]:
+        try:
+            arr = json.loads(self.match_patterns_json or "[]")
+            return [str(x) for x in arr if str(x).strip()]
+        except Exception:
+            return []
+
+    def set_match_patterns(self, patterns: List[str]) -> None:
+        patterns = [p.strip() for p in (patterns or []) if p and p.strip()]
+        self.match_patterns_json = json.dumps(patterns)
 
 class Job(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
 
-    source: str  # "upload" or "ingest"
-    input_path: str
-    original_name: str
-    status: str  # "ok" | "skipped" | "failed"
+    source: str = "ingest"  # ingest|upload
+    input_path: str = ""
+    original_name: str = ""
+    status: str = "failed"  # ok|failed|skipped
     message: str = ""
-
-    template_id: Optional[int] = Field(default=None, index=True)
-    doc_folder: str = ""
+    template_id: Optional[int] = None
     dest_path: str = ""
 
     extracted_company: str = ""
     extracted_invoice_number: str = ""
+    extracted_date: str = ""  # ISO
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Document(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+    location: str = "library"  # library|failed
+    abs_path: str
+    rel_path: str
+    filename: str
+    ext: str = ""
+    status: str = "indexed"  # indexed|ok|failed|skipped
+
+    tags_json: str = "[]"
+    template_id: Optional[int] = None
+
+    ocr_text: str = ""
+    extracted_company: str = ""
+    extracted_invoice_number: str = ""
     extracted_date: str = ""
+
+    size_bytes: int = 0
+    mtime: float = 0.0
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    def tags(self) -> List[str]:
+        try:
+            arr = json.loads(self.tags_json or "[]")
+            return [str(x).strip() for x in arr if str(x).strip()]
+        except Exception:
+            return []
+
+    def set_tags(self, tags: List[str]) -> None:
+        tags = [t.strip() for t in (tags or []) if t and t.strip()]
+        self.tags_json = json.dumps(sorted(set(tags), key=str.lower))

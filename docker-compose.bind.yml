@@ -5,13 +5,12 @@ services:
     ports:
       - "8000:8000"
     environment:
-      ODM_INGEST_DIR: /data/ingest
-      ODM_LIBRARY_DIR: /data/library
-      ODM_CONFIG_DIR: /data/config
-      ODM_FAILED_DIR: /data/failed
       ODM_SCAN_ENABLED: "true"
       ODM_SCAN_INTERVAL_SECONDS: "15"
       ODM_TESSERACT_LANG: "eng"
+      ODM_AUTH_ENABLED: "true"
+      ODM_ADMIN_PASSWORD: "change-me"
+      ODM_SESSION_SECRET: "change-me-to-a-long-random-string"
     volumes:
       - ./data/ingest:/data/ingest
       - ./data/library:/data/library

@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,22 +7,54 @@
   <link rel="stylesheet" href="/static/app.css" />
 </head>
 <body>
-  <div class="container">
-    <div class="nav">
-      <div class="brand">PaperTrellis <span class="badge" style="margin-left:8px;">v{{ app_version }}</span></div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <a href="/">Dashboard</a>
-        <a href="/upload">Manual Upload</a>
-        <a href="/settings">Ingest Settings</a>
-        <a href="/templates">Templates</a>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">PT</div>
+        <div class="brand-text">
+          <div class="brand-name">PaperTrellis</div>
+          <div class="brand-sub">v{{ app_version }}</div>
+        </div>
       </div>
-    </div>
 
-    {% block content %}{% endblock %}
+      <nav class="nav">
+        <a class="nav-item {% if active=='documents' %}active{% endif %}" href="/documents">Documents</a>
+        <a class="nav-item {% if active=='tags' %}active{% endif %}" href="/tags">Tags</a>
+        <a class="nav-item {% if active=='templates' %}active{% endif %}" href="/templates">Templates</a>
+        <a class="nav-item {% if active=='ingest' %}active{% endif %}" href="/ingest">Ingest</a>
+        <a class="nav-item {% if active=='failed' %}active{% endif %}" href="/failed">Failed</a>
+      </nav>
 
-    <div class="footer">
-      Tip: mount <span class="code">/data/ingest</span> and drop files there for auto-processing. Failed ingest files go to <span class="code">/data/failed</span>.
-    </div>
+      <div class="sidebar-footer">
+        <div class="muted">
+          Works with your existing folder structure — PaperTrellis only moves/renames files when a template tells it to.
+        </div>
+        {% if auth_enabled %}
+          {% if logged_in %}
+            <a class="link" href="/logout">Log out</a>
+          {% endif %}
+        {% endif %}
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 class="page-title">{{ title or "PaperTrellis" }}</h1>
+          {% if subtitle %}
+            <div class="page-subtitle">{{ subtitle }}</div>
+          {% endif %}
+        </div>
+
+        <div class="topbar-right">
+          {% block topbar %}{% endblock %}
+        </div>
+      </header>
+
+      <section class="content">
+        {% block content %}{% endblock %}
+      </section>
+    </main>
   </div>
 </body>
 </html>

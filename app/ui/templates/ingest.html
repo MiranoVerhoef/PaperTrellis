@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+{% set active = "ingest" %}
+{% set title = "Ingest" %}
+{% set subtitle = "Folder watcher + OCR pipeline (non-destructive to your existing library)" %}
+
+{% block content %}
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-h">Paths</div>
+      <div class="kv">
+        <div class="k">Ingest</div><div class="v"><span class="code">{{ ingest_dir }}</span></div>
+        <div class="k">Library</div><div class="v"><span class="code">{{ library_dir }}</span></div>
+        <div class="k">Failed</div><div class="v"><span class="code">{{ failed_dir }}</span></div>
+      </div>
+      <div class="muted">
+        Drop files into ingest, they’ll be OCR’d and routed only if a template matches.
+        If processing fails or no template matches, the file is moved to failed.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">Runtime</div>
+      <div class="kv">
+        <div class="k">Scan enabled</div><div class="v">{{ "true" if scan_enabled else "false" }}</div>
+        <div class="k">Interval</div><div class="v">{{ scan_interval }}s</div>
+        <div class="k">Tesseract lang</div><div class="v">{{ tesseract_lang }}</div>
+      </div>
+
+      <div class="muted">
+        Configure these via environment variables (see <span class="code">docs/CONFIG.md</span>).
+      </div>
+    </div>
+  </div>
+{% endblock %}

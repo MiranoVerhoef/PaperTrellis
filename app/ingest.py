@@ -9,10 +9,11 @@ from watchdog.events import FileSystemEventHandler, FileCreatedEvent, FileMovedE
 
 from .settings import settings
 from .processor import process_file
-from .utils import atomic_move, safe_filename
+from .utils import atomic_move, safe_filename, file_stat
+from .db import get_session
+from .models import Document
 
 def _ingest_relative_subdir(path: str) -> str:
-    """If path is under ingest_dir, return its relative parent folder ('' if none)."""
     try:
         ingest_root = os.path.abspath(settings.ingest_dir)
         abs_path = os.path.abspath(path)
@@ -34,13 +35,12 @@ class _Handler(FileSystemEventHandler):
         if not os.path.isfile(path):
             return
 
-        # Avoid double processing
         norm = os.path.abspath(path)
         if norm in self._seen:
             return
         self._seen.add(norm)
 
-        # Wait a bit for file to finish writing (best-effort)
+        # wait for write to settle
         for _ in range(24):
             try:
                 size1 = os.path.getsize(path)
@@ -53,7 +53,6 @@ class _Handler(FileSystemEventHandler):
 
         job = process_file(path, source="ingest")
 
-        # If ingest processing did not succeed, move the file to the failed folder (non-destructive to library)
         if job.status != "ok":
             try:
                 if os.path.exists(path):
@@ -62,9 +61,29 @@ class _Handler(FileSystemEventHandler):
                     dest_dir = os.path.join(failed_dir, rel_subdir) if rel_subdir else failed_dir
                     base_name = safe_filename(os.path.basename(path))
                     dest_path = os.path.join(dest_dir, base_name)
-                    atomic_move(path, dest_path)
+                    moved_to = atomic_move(path, dest_path)
+
+                    size, mtime = file_stat(moved_to)
+                    doc = Document(
+                        location="failed",
+                        abs_path=os.path.abspath(moved_to),
+                        rel_path=os.path.relpath(os.path.abspath(moved_to), os.path.abspath(settings.failed_dir)).replace(os.sep, "/"),
+                        filename=os.path.basename(moved_to),
+                        ext=os.path.splitext(moved_to)[1].lower(),
+                        status=job.status,
+                        template_id=job.template_id,
+                        extracted_company=job.extracted_company or "",
+                        extracted_invoice_number=job.extracted_invoice_number or "",
+                        extracted_date=job.extracted_date or "",
+                        size_bytes=size,
+                        mtime=mtime,
+                    )
+                    # tag it for easy filtering
+                    doc.set_tags(["failed"] if job.status == "failed" else ["unmatched"])
+                    with get_session() as s:
+                        s.add(doc)
+                        s.commit()
             except Exception:
-                # If even the fail-move fails, leave the file in place.
                 pass
 
     def on_created(self, event):
@@ -83,11 +102,12 @@ class IngestService:
         if not settings.scan_enabled:
             return
         os.makedirs(settings.ingest_dir, exist_ok=True)
+        os.makedirs(settings.library_dir, exist_ok=True)
         os.makedirs(settings.failed_dir, exist_ok=True)
+        os.makedirs(settings.tmp_dir, exist_ok=True)
 
         handler = _Handler()
         observer = Observer()
-        # recursive=True so we preserve original ingest subfolder structure
         observer.schedule(handler, settings.ingest_dir, recursive=True)
         observer.start()
         self.observer = observer
